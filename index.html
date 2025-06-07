@@ -140,6 +140,13 @@
             color: white;
         }
 
+        .btn-generator {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            color: #2c3e50;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
         .btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
@@ -303,7 +310,6 @@
             }
         }
 
-        /* Keyboard shortcuts hint */
         .shortcuts {
             position: fixed;
             bottom: 20px;
@@ -319,6 +325,95 @@
 
         .shortcuts:hover {
             opacity: 1;
+        }
+
+        .generator-section {
+            margin-top: 2rem;
+        }
+
+        .generator-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .generator-card:hover {
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        .generator-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .generator-subtitle {
+            color: #7f8c8d;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .generator-options {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .radio-option:hover {
+            transform: translateY(-1px);
+        }
+
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+
+        .radio-custom {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--secondary);
+            border-radius: 50%;
+            margin-right: 0.8rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .radio-option input[type="radio"]:checked + .radio-custom {
+            background: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
+        }
+
+        .radio-option input[type="radio"]:checked + .radio-custom::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .radio-label {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1rem;
         }
     </style>
 </head>
@@ -378,8 +473,30 @@
             </div>
         </div>
 
+        <div class="generator-section">
+            <div class="generator-card">
+                <div class="generator-title">🎲 Random CNPJ Generator</div>
+                <p class="generator-subtitle">Generate random CNPJ numbers for testing purposes</p>
+                <div class="generator-options">
+                    <label class="radio-option">
+                        <input type="radio" name="cnpjType" value="numeric" checked>
+                        <span class="radio-custom"></span>
+                        <span class="radio-label">Numeric Only (0-9)</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="cnpjType" value="alphanumeric">
+                        <span class="radio-custom"></span>
+                        <span class="radio-label">Alphanumeric (0-9, A-Z)</span>
+                    </label>
+                </div>
+                <button class="btn btn-generator" onclick="generateRandomCNPJ()">
+                    🎲 Generate Random CNPJ
+                </button>
+            </div>
+        </div>
+
         <div class="app-footer">
-            <p>CNPJ Validator App • Press Ctrl+G to generate • Ctrl+V to validate</p>
+            <p>CNPJ Validator App • Press Ctrl+G to generate • Ctrl+V to validate • Ctrl+Shift+R for random</p>
         </div>
     </div>
 
@@ -387,7 +504,8 @@
         <strong>Shortcuts:</strong><br>
         Ctrl+G - Generate<br>
         Ctrl+V - Validate<br>
-        Ctrl+R - Clear
+        Ctrl+R - Clear<br>
+        Ctrl+Shift+R - Random
     </div>
 
     <script>
@@ -404,8 +522,13 @@
                         handleValidate();
                         break;
                     case 'r':
-                        e.preventDefault();
-                        clearAll();
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            generateRandomCNPJ();
+                        } else {
+                            e.preventDefault();
+                            clearAll();
+                        }
                         break;
                 }
             }
@@ -499,94 +622,4 @@
 
         function formatCNPJ(cnpj) {
             if (cnpj.length !== 14) return cnpj;
-            return `${cnpj.slice(0, 2)}.${cnpj.slice(2, 5)}.${cnpj.slice(5, 8)}/${cnpj.slice(8, 12)}-${cnpj.slice(12)}`;
-        }
-
-        function generateCheckDigits(first12) {
-            const weights1 = [5,4,3,2,9,8,7,6,5,4,3,2];
-            const weights2 = [6,5,4,3,2,9,8,7,6,5,4,3,2];
-
-            const firstDigits = convertToNumericArray(first12);
-            const firstSum = firstDigits.reduce((acc, val, i) => acc + (val * weights1[i]), 0);
-            const firstCheck = calculateCheckDigit(firstSum);
-
-            const secondSum = [...firstDigits, firstCheck].reduce((acc, val, i) => acc + (val * weights2[i]), 0);
-            const secondCheck = calculateCheckDigit(secondSum);
-
-            return `${firstCheck}${secondCheck}`;
-        }
-
-        function calculateCheckDigit(sum) {
-            const remainder = sum % 11;
-            return remainder < 2 ? 0 : 11 - remainder;
-        }
-
-        function validateCNPJ(cnpj) {
-            const result = { isValid: true, errors: [] };
-
-            if (cnpj.length !== 14) {
-                result.errors.push('Invalid length - must be 14 characters.');
-            }
-
-            if (!/^[0-9A-Z]+$/.test(cnpj)) {
-                result.errors.push('Contains invalid characters (only 0-9 and A-Z allowed).');
-            }
-
-            if (new Set(cnpj).size === 1 && cnpj.length === 14) {
-                result.errors.push('All characters are identical.');
-            }
-
-            if (result.errors.length === 0) {
-                const actualCheckDigits = cnpj.slice(-2);
-                const expectedCheckDigits = generateCheckDigits(cnpj.slice(0, 12));
-
-                if (actualCheckDigits !== expectedCheckDigits) {
-                    result.errors.push(`Invalid check digits (expected <strong>${expectedCheckDigits}</strong>).`);
-                }
-            }
-
-            result.isValid = result.errors.length === 0;
-            return result;
-        }
-
-        function convertToNumericArray(str) {
-            return str.split('').map(c => c.charCodeAt(0) - 48);
-        }
-
-        function updateDisplayFields(cnpj) {
-            document.getElementById('unformattedCnpj').textContent = cnpj || '-';
-            document.getElementById('formattedCnpj').textContent = cnpj.length === 14 ? formatCNPJ(cnpj) : (cnpj || '-');
-            document.getElementById('rootNumber').textContent = cnpj.length >= 8 ? cnpj.slice(0, 8) : '-';
-            document.getElementById('branchNumber').textContent = cnpj.length >= 12 ? cnpj.slice(8, 12) : '-';
-            document.getElementById('checkDigits').textContent = cnpj.length >= 14 ? cnpj.slice(12) : '-';
-        }
-
-        function showResult(message, isValid, errors = []) {
-            const resultMessage = document.getElementById('resultMessage');
-            const errorList = document.getElementById('errorList');
-
-            resultMessage.innerHTML = isValid
-                ? `<span class="badge valid-badge">${message}</span>`
-                : `<span class="badge error-badge">${message}</span>`;
-
-            errorList.innerHTML = errors && errors.length
-                ? `<ul>${errors.map(e => `<li>${e}</li>`).join('')}</ul>`
-                : '';
-        }
-
-        function clearValidation() {
-            document.getElementById('resultMessage').innerHTML = '';
-            document.getElementById('errorList').innerHTML = '';
-        }
-
-        // Add some app-like behavior
-        window.addEventListener('beforeunload', function(e) {
-            const input = document.getElementById('cnpjInput').value;
-            if (input.trim()) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
-    </script>
-</body>
-</html>
+            return cnpj.slice(0, 2) + '.' + cnpj.slice(2, 5) + '.' + cnpj.s
