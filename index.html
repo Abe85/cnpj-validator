@@ -214,11 +214,21 @@
             font-weight: 500;
         }
 
-        .breakdown-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        .breakdown-row {
+            display: flex;
             gap: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .breakdown-row-1 .breakdown-field {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .breakdown-row-2 .breakdown-field {
+            flex: 1;
+            min-width: 120px;
         }
 
         .breakdown-field {
@@ -237,9 +247,10 @@
 
         .breakdown-field:nth-child(1) { background: linear-gradient(135deg, #a8edea, #fed6e3); }
         .breakdown-field:nth-child(2) { background: linear-gradient(135deg, #ffeaa7, #fab1a0); }
-        .breakdown-field:nth-child(3) { background: linear-gradient(135deg, #81ecec, #74b9ff); }
-        .breakdown-field:nth-child(4) { background: linear-gradient(135deg, #fd79a8, #fdcb6e); }
-        .breakdown-field:nth-child(5) { background: linear-gradient(135deg, #6c5ce7, #a29bfe); }
+        
+        .breakdown-row-2 .breakdown-field:nth-child(1) { background: linear-gradient(135deg, #81ecec, #74b9ff); }
+        .breakdown-row-2 .breakdown-field:nth-child(2) { background: linear-gradient(135deg, #fd79a8, #fdcb6e); }
+        .breakdown-row-2 .breakdown-field:nth-child(3) { background: linear-gradient(135deg, #6c5ce7, #a29bfe); }
 
         .breakdown-label {
             font-size: 0.9rem;
@@ -278,8 +289,13 @@
                 grid-template-columns: 1fr;
             }
             
-            .breakdown-grid {
-                grid-template-columns: 1fr;
+            .breakdown-row {
+                flex-direction: column;
+            }
+            
+            .breakdown-row-1 .breakdown-field,
+            .breakdown-row-2 .breakdown-field {
+                min-width: 0;
             }
             
             .app-title {
@@ -310,7 +326,7 @@
     <div class="app-container">
         <div class="app-header">
             <h1 class="app-title">CNPJ Validator</h1>
-            <p class="app-subtitle">CNPJ validation and check digit generator</p>
+            <p class="app-subtitle">Professional CNPJ validation and check digit generator</p>
         </div>
         
         <div class="input-section">
@@ -335,7 +351,7 @@
 
             <div class="result-card">
                 <div class="result-title breakdown-title">CNPJ Breakdown</div>
-                <div class="breakdown-grid">
+                <div class="breakdown-row breakdown-row-1">
                     <div class="breakdown-field">
                         <div class="breakdown-label">Formatted</div>
                         <div class="breakdown-value" id="formattedCnpj">-</div>
@@ -344,6 +360,8 @@
                         <div class="breakdown-label">Unformatted</div>
                         <div class="breakdown-value" id="unformattedCnpj">-</div>
                     </div>
+                </div>
+                <div class="breakdown-row breakdown-row-2">
                     <div class="breakdown-field">
                         <div class="breakdown-label">Root Number</div>
                         <div class="breakdown-value" id="rootNumber">-</div>
@@ -405,9 +423,10 @@
             clearValidation();
         });
 
-        // Auto-format input as user types
+        // Auto-format input as user types - FIXED to support alphanumeric
         document.getElementById('cnpjInput').addEventListener('input', function(e) {
-            const value = e.target.value.replace(/\D/g, '');
+            // Only keep alphanumeric characters (0-9, A-Z)
+            const value = e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
             if (value.length <= 14) {
                 e.target.value = formatCNPJInput(value);
             }
